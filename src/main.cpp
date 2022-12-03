@@ -25,12 +25,12 @@ SOFTWARE.
 /**
  * Initialize our motors and our controller globals here
 */
-pros::Motor left_f(10);
-pros::Motor left_m(2);
-pros::Motor left_b(3, true);
-pros::Motor right_f(4);
-pros::Motor right_m(5);
-pros::Motor right_b(6, true);
+pros::Motor left_front(10);
+pros::Motor left_middle(2);
+pros::Motor left_back(3, true);
+pros::Motor right_front(4);
+pros::Motor right_middle(5);
+pros::Motor right_back(6, true);
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 	
@@ -43,7 +43,7 @@ void disabled() {}
 void competition_initialize() {}
 
 void autonomous() {
-	// left_f.move_absolute(100, 200);
+	// left_front.move_absolute(100, 200);
 	// pros::delay(1000);
 }
 
@@ -59,12 +59,12 @@ void opcontrol() {
 		drive_power = master.get_analog(ANALOG_LEFT_Y);
 		turn_power = master.get_analog(ANALOG_LEFT_X);
 
-		left_f.move(drive_power + turn_power);
-		left_m.move(drive_power + turn_power);
-		left_b.move(drive_power + turn_power);
-		right_f.move(drive_power - turn_power);
-		right_m.move(drive_power - turn_power);
-		right_b.move(drive_power - turn_power);
+		left_front.move(drive_power + turn_power);
+		left_middle.move(drive_power + turn_power);
+		left_back.move(drive_power + turn_power);
+		right_front.move(drive_power - turn_power);
+		right_middle.move(drive_power - turn_power);
+		right_back.move(drive_power - turn_power);
 
 		pros::delay(20);
 	}
