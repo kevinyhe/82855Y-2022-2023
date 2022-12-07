@@ -82,7 +82,7 @@ void opcontrol() {
 		pros::delay(20);
 
 
-	    left_front = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+	left_front = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
     	std::cout << "Left Front Motor Position: " << left_front.get_position();
 		left_middle = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
     	std::cout << "Left Middle Position: " << left_middle.get_position();
