@@ -25,12 +25,13 @@ SOFTWARE.
 /**
  * Initialize our motors and our controller globals here
 */
-pros::Motor left_front(10);
-pros::Motor left_middle(2);
+pros::Motor left_front(10, true);
+pros::Motor left_middle(2, true); // we don't know why this is reversed it's just like that
 pros::Motor left_back(3, true);
 pros::Motor right_front(4);
 pros::Motor right_middle(5);
 pros::Motor right_back(6, true);
+pros::Motor roller(9);
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 	
@@ -57,12 +58,9 @@ void autonomous() {
 }
 
 void opcontrol() {
-	
-
-
-	
-	int drive_power = 90;
-	int turn_power = 40;
+	int drive_power = 60;
+	int turn_power = 50;
+	bool roller_button = false;
 
 	while (true) {
 		/**
@@ -70,7 +68,21 @@ void opcontrol() {
 		 * - left joystick for all forward back and turns
 		*/
 		drive_power = master.get_analog(ANALOG_LEFT_Y);
-		turn_power = master.get_analog(ANALOG_LEFT_X);
+		turn_power = master.get_analog(ANALOG_RIGHT_X);
+		roller_button = master.get_digital(DIGITAL_L1);
+
+		if (roller_button) {
+			roller.move(120); 
+		} else {
+			roller.move(0); 
+		}
+		/**
+		 * things to do:
+		 * one joystick for forward back and turning
+		 * turns way too fast
+		 * autonomous
+		 * different speed modes?
+		*/
 
 		left_front.move(drive_power + turn_power);
 		left_middle.move(drive_power + turn_power);
@@ -81,21 +93,16 @@ void opcontrol() {
 
 		pros::delay(20);
 
-
-	
-    	std::cout << "Left Front Motor Position: " << left_front.get_position();
-		left_middle = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-    	std::cout << "Left Middle Position: " << left_middle.get_position();
-		left_back = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-    	std::cout << "Left Back Motor Position: " << left_back.get_position();
-		right_front = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-    	std::cout << "Right Front Motor Position: " << right_front.get_position();
-		right_middle = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-    	std::cout << "Right Middle Motor Position: " << right_middle.get_position();
-		right_back = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-    	std::cout << "Right Back Motor Position: " << right_back.get_position();
-
-    	pros::delay(2);
-		
+    	// std::cout << "Left Front Motor Position: " << left_front.get_position();
+		// left_middle = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+    	// std::cout << "Left Middle Position: " << left_middle.get_position();
+		// left_back = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+    	// std::cout << "Left Back Motor Position: " << left_back.get_position();
+		// right_front = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+    	// std::cout << "Right Front Motor Position: " << right_front.get_position();
+		// right_middle = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+    	// std::cout << "Right Middle Motor Position: " << right_middle.get_position();
+		// right_back = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+    	// std::cout << "Right Back Motor Position: " << right_back.get_position();		
 	}
 }
