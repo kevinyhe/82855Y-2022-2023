@@ -32,7 +32,7 @@ pros::Motor right_front(4);
 pros::Motor right_middle(5);
 pros::Motor right_back(6, true);
 pros::Motor roller(9);
-
+pros::Motor expan(11);//temporary, depends on where we attach expansion
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 	
 void initialize() {
@@ -52,7 +52,7 @@ void autonomous() {
 	left_front.move_relative(100, 100); // Also moves 100 units forward
   	while (!((left_front.get_position() < 205) && (left_front.get_position() > 195))) {
     	pros::delay(2);
-  }
+  	 }
 	// left_front.move_absolute(100, 200);
 	// pros::delay(1000);
 }
@@ -61,7 +61,8 @@ void opcontrol() {
 	int drive_power = 60;
 	int turn_power = 50;
 	bool roller_button = false;
-
+	bool expan_button = false;
+	bool Auto_button = false;
 	while (true) {
 		/**
 		 * Arcade drive
@@ -70,7 +71,18 @@ void opcontrol() {
 		drive_power = master.get_analog(ANALOG_LEFT_Y);
 		turn_power = master.get_analog(ANALOG_RIGHT_X);
 		roller_button = master.get_digital(DIGITAL_L1);
+		expan_button = master.get_digital(DIGITAL_L2);
 
+		
+
+		//expansion
+		if (expan_button) {
+			expan.move(60);
+		} else {
+			expan.move(0);
+		}
+
+		//roller
 		if (roller_button) {
 			roller.move(120); 
 		} else {
