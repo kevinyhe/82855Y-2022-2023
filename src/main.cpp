@@ -62,7 +62,7 @@ void opcontrol() {
 	int turn_power = 50;
 	bool roller_button = false;
 	bool expan_button = false;
-	bool Auto_button = false;
+	
 	while (true) {
 		/**
 		 * Arcade drive
