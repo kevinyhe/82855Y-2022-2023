@@ -104,6 +104,8 @@ void opcontrol() {
         analog_x *= 100 / 127;
 
         analog_y *= -1; // invert the x-axis
+
+        // please refer to this, I don't know how to explain it
         // https://home.kendra.com/mauser/Joystick.html
         int vertical = (100 - abs(int(analog_x))) * (analog_y / 100) + analog_y;
         int horizontal = (100 - abs(int(analog_y))) * (analog_x / 100) + analog_x;
