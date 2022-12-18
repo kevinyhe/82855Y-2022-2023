@@ -19,16 +19,17 @@
 // SOFTWARE.
 
 #include "main.h"
+#include "pros/rtos.hpp"
 
 // initialize our motors and globals here
-pros::Motor left_front(10);
-pros::Motor left_middle(2);
-pros::Motor left_back(3);
-pros::Motor right_front(4, true);
-pros::Motor right_middle(5, true);
-pros::Motor right_back(6);
-pros::Motor roller(9);
-pros::Motor expansion(11); //temporary, depends on where we attach expansion
+pros::Motor right_front(10);
+pros::Motor right_middle(2); // we don't know why this is reversed it's just like that
+pros::Motor right_back(3);
+pros::Motor left_front(4);
+pros::Motor left_middle(5);
+pros::Motor left_back(6);
+pros::Motor roller(7);
+pros::Motor expansion(1); //temporary, depends on where we attach expansion
 
 // asign the motor groups for the left and right sides
 // because we have already reversed the motors that will spin in the opposite direction
@@ -56,25 +57,51 @@ void autonomous() {
     // if we're lucky, they won't be using sensors and will continue to 
     // move_relative and will be off by a few units and they start
     // with a severe disadvantage
-    left_front.move_absolute(100, 100); // moves 100 units forward
-    while (!((left_front.get_position() < 105) && (left_front.get_position() > 95))) {
-        // continue running this loop as long as the motor is not within +-5 units of its goal
-        pros::delay(2);
-    }
-    left_front.move_relative(100, 100); // also moves 100 units forward
-    while (!((left_front.get_position() < 205) && (left_front.get_position() > 195))) {
-        pros::delay(2);
-    }
-    // left_front.move_absolute(100, 200);
-    // pros::delay(1000);
+
+
+
+    // TODO: poor programming, pls fix later
+    left_front.move(127);
+    left_middle.move(127);
+    left_back.move(127);
+    right_front.move(-127);
+    right_middle.move(-127);
+    right_back.move(-127);
+
+    roller.move(-127);
+    pros::delay(250);
+    left_front.move(0);
+    left_middle.move(0);
+    left_back.move(0);
+    right_front.move(0);
+    right_middle.move(0);
+    right_back.move(0);
+
+    // pros::delay(425);
+    roller.move(0);
+    // while (true) {
+    //     left_front.move(-127);
+    //     left_middle.move(-127);
+    //     left_back.move(-127);
+    //     right_front.move(-127);
+    //     right_middle.move(-127);
+    //     right_back.move(-127);
+    //     pros::delay(250);
+    //     left_front.move(127);
+    //     left_middle.move(127);
+    //     left_back.move(127);
+    //     right_front.move(127);
+    //     right_middle.move(127);
+    //     right_back.move(127);
+    // }
 }
 
 // driver control
 // if we fail we can all blame kerry
 void opcontrol() {
     // initialze variables
-    int analog_y, analog_x;
-    bool roller_button, expansion_button;
+    int drive_power, turn_power;
+    bool roller_button, expansion_button, expansion_button_confirm, roller_button_opp;
 
     // it's bad practice to use an endless loop but 
     // we really have no choice here
@@ -83,39 +110,49 @@ void opcontrol() {
         // because type declaration inside will take up memory
         // and we want to use as little processing power as
         // possible
-        analog_y = master.get_analog(ANALOG_LEFT_Y);
-        analog_x = master.get_analog(ANALOG_RIGHT_X);
+		turn_power = master.get_analog(ANALOG_LEFT_Y);
+		drive_power = master.get_analog(ANALOG_RIGHT_X);
+        roller_button_opp = master.get_digital(DIGITAL_R1);
         roller_button = master.get_digital(DIGITAL_L1);
         expansion_button = master.get_digital(DIGITAL_L2);
+        expansion_button_confirm = master.get_digital(DIGITAL_R2);
 
         // assign expansion button to left 2 button
         // when endgame, expansion motor will launch string
-        if (expansion_button) { expansion.move(60); }
+        if (expansion_button && expansion_button_confirm) { expansion.move(-60); }
         else { expansion.move(0); }
 
         // assign roller button to left 1 button
         if (roller_button) { roller.move(127); }
         else { roller.move(0); }
 
-        // because readings of the analog channel range from -127 to 127
-        // scale the joystick values to be between -100 and 100
-        // so, we will use a percentage from -100% to 100%
-        analog_y *= 100 / 127;
-        analog_x *= 100 / 127;
+        if (roller_button_opp) { roller.move(-127); }
+        else { roller.move(0); }
 
-        analog_y *= -1; // invert the x-axis
+        // // because readings of the analog channel range from -127 to 127
+        // // scale the joystick values to be between -100 and 100
+        // // so, we will use a percentage from -100% to 100%
+        // analog_y *= 100 / 127;
+        // analog_x *= 100 / 127;
 
-        // please refer to this, I don't know how to explain it
-        // https://home.kendra.com/mauser/Joystick.html
-        int vertical = (100 - abs(int(analog_x))) * (analog_y / 100) + analog_y;
-        int horizontal = (100 - abs(int(analog_y))) * (analog_x / 100) + analog_x;
+        drive_power *= -0.6; // invert the x-axis
+        turn_power *= -1; // invert the x-axis
 
-        int voltage_right = (((vertical - horizontal) / 2) / 100) * 127;
-        int voltage_left = (((vertical + horizontal) / 2) / 100) * 127;
+        // // please refer to this, I don't know how to explain it
+        // // https://home.kendra.com/mauser/Joystick.html
+        // int vertical = (100 - abs(int(analog_x))) * (analog_y / 100) + analog_y;
+        // int horizontal = (100 - abs(int(analog_y))) * (analog_x / 100) + analog_x;
 
-        // move the motor groups with the calculated voltage
-        left_motor_group.move(voltage_left);
-        right_motor_group.move(voltage_right);
+        // int voltage_right = (((vertical - horizontal) / 2) / 100) * 127;
+        // int voltage_left = (((vertical + horizontal) / 2) / 100) * 127;
+
+        // // move the motor groups with the calculated voltage
+		left_front.move(drive_power + turn_power);
+		left_middle.move(drive_power + turn_power);
+		left_back.move(drive_power + turn_power);
+		right_front.move(drive_power - turn_power);
+		right_middle.move(drive_power - turn_power);
+		right_back.move(drive_power - turn_power);
 
         // add a little bit of delay so it doesn't overheat or whatever
         pros::delay(20);
