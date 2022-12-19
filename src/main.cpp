@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -20,21 +20,25 @@
 
 #include "main.h"
 #include "pros/rtos.hpp"
+#include <cmath>
+#include <tuple>
 
 // initialize our motors and globals here
+pros::Motor left_front(4, true);
+pros::Motor left_middle(5, true);
+pros::Motor left_back(6, true);
 pros::Motor right_front(10);
-pros::Motor right_middle(2); // we don't know why this is reversed it's just like that
+pros::Motor
+    right_middle(2); // we don't know why this is reversed it's just like that
 pros::Motor right_back(3);
-pros::Motor left_front(4);
-pros::Motor left_middle(5);
-pros::Motor left_back(6);
 pros::Motor roller(7);
-pros::Motor expansion(1); //temporary, depends on where we attach expansion
+pros::Motor expansion(1); // temporary, depends on where we attach expansion
 
 // asign the motor groups for the left and right sides
-// because we have already reversed the motors that will spin in the opposite direction
-// we can make the same group spin in the same direction because there
-// is no need to have one motor spin in the opposite direction as a neighboring motor
+// because we have already reversed the motors that will spin in the opposite
+// direction we can make the same group spin in the same direction because there
+// is no need to have one motor spin in the opposite direction as a neighboring
+// motor
 pros::Motor_Group left_motor_group({left_front, left_middle, left_back});
 pros::Motor_Group right_motor_group({right_front, right_middle, right_back});
 
@@ -47,114 +51,114 @@ void disabled() {}
 
 void competition_initialize() {}
 
-// autonomous code will be triggered 
+// autonomous code will be triggered
 // in the first 15s of the round
-void autonomous() {
-    // as of 16/12/22, we have not yet added any functionality except
-    // moving around, rollers and expansion so for now our autonomous
-    // will be nothing but wreaking havoc on opposing autonomous code
-    // by moving around and being a nuisance we can disrupt their code
-    // if we're lucky, they won't be using sensors and will continue to 
-    // move_relative and will be off by a few units and they start
-    // with a severe disadvantage
+void autonomous()
+{
+    // as of 16/12/22, we have not yet added any functionality
+    // except moving around, rollers and expansion so for now
+    // our autonomous will be nothing but wreaking havoc on
+    // opposing autonomous code by moving around and being a
+    // nuisance we can disrupt their code if we're lucky, they
+    // won't be using sensors and will continue to move_relative
+    // and will be off by a few units and they start with a
+    // severe disadvantage
 
-
-
-    // TODO: poor programming, pls fix later
-    left_front.move(127);
-    left_middle.move(127);
-    left_back.move(127);
-    right_front.move(-127);
-    right_middle.move(-127);
-    right_back.move(-127);
-
+    left_motor_group.move(-127); // move backwards
+    right_motor_group.move(-127);
     roller.move(-127);
-    pros::delay(250);
-    left_front.move(0);
-    left_middle.move(0);
-    left_back.move(0);
-    right_front.move(0);
-    right_middle.move(0);
-    right_back.move(0);
 
-    // pros::delay(425);
+    pros::delay(250);
+    left_motor_group.move(0);
+    right_motor_group.move(0);
     roller.move(0);
-    // while (true) {
-    //     left_front.move(-127);
-    //     left_middle.move(-127);
-    //     left_back.move(-127);
-    //     right_front.move(-127);
-    //     right_middle.move(-127);
-    //     right_back.move(-127);
-    //     pros::delay(250);
-    //     left_front.move(127);
-    //     left_middle.move(127);
-    //     left_back.move(127);
-    //     right_front.move(127);
-    //     right_middle.move(127);
-    //     right_back.move(127);
-    // }
+}
+
+/**
+i: drive power
+j: turn power
+*/
+std::tuple<int, int> motor_voltage(float i, float j)
+{
+    // because readings of the analog channel range from -127 to
+    // 127 scale the joystick values to be between -100 and 100
+    // so, we will use a percentage from -100% to 100%
+    // first we cast the int to a float, then divide by 127
+    // and multiply by 100 to get a percentage of full power
+    float Y = (static_cast<float>(i) / 127.0) * 100;
+    float X = (static_cast<float>(j) / 127.0) * 100;
+
+    // please refer to this, I don't know how to explain it
+    // https://home.kendra.com/mauser/Joystick.html
+    int V = (100 - abs(int(X))) * (Y / 100) + Y;
+    int W = (100 - abs(int(Y))) * (X / 100) + X;
+
+    float R = static_cast<float>(((V - W) / 2.0)) / 100 * 127;
+    float L = static_cast<float>(((V - W) / 2.0)) / 100 * 127;
+
+    // return a tuple of the left and right motor voltages
+    // also cast the floats to int16 because it doesn't accept
+    // floating point numbers
+    return std::make_tuple(static_cast<int16_t>(L), static_cast<int16_t>(R));
 }
 
 // driver control
 // if we fail we can all blame kerry
-void opcontrol() {
+void opcontrol()
+{
     // initialze variables
-    int drive_power, turn_power;
-    bool roller_button, expansion_button, expansion_button_confirm, roller_button_opp;
+    int drive_power, turn_power, voltage_left, voltage_right;
+    float analog_x, analog_y;
+    bool roller_button, expansion_button, expansion_button_confirm,
+	roller_button_opp;
 
-    // it's bad practice to use an endless loop but 
+    // it's bad practice to use an endless loop but
     // we really have no choice here
-    while (true) {
-        // we initialize these variables outside of the loop
-        // because type declaration inside will take up memory
-        // and we want to use as little processing power as
-        // possible
-		turn_power = master.get_analog(ANALOG_LEFT_Y);
-		drive_power = master.get_analog(ANALOG_RIGHT_X);
-        roller_button_opp = master.get_digital(DIGITAL_R1);
-        roller_button = master.get_digital(DIGITAL_L1);
-        expansion_button = master.get_digital(DIGITAL_L2);
-        expansion_button_confirm = master.get_digital(DIGITAL_R2);
+    while (true)
+	{
+	    // we initialize these variables outside
+	    // of the loop because type declaration
+	    // inside will take up memory and we
+	    // want to use as little processing
+	    // power as possible
 
-        // assign expansion button to left 2 button
-        // when endgame, expansion motor will launch string
-        if (expansion_button && expansion_button_confirm) { expansion.move(-60); }
-        else { expansion.move(0); }
+	    drive_power = master.get_analog(ANALOG_LEFT_Y);
+	    turn_power = master.get_analog(ANALOG_RIGHT_X);
+	    roller_button = master.get_digital(DIGITAL_L1);
+	    expansion_button = master.get_digital(DIGITAL_L2);
+	    expansion_button_confirm = master.get_digital(DIGITAL_R2);
 
-        // assign roller button to left 1 button
-        if (roller_button) { roller.move(127); }
-        else { roller.move(0); }
+	    // assign expansion button to left 2
+	    // button when endgame, expansion motor
+	    // will launch string
+	    if (expansion_button && expansion_button_confirm)
+		{
+		    expansion.move(-60);
+		}
+	    else
+		{
+		    expansion.move(0);
+		}
 
-        if (roller_button_opp) { roller.move(-127); }
-        else { roller.move(0); }
+	    // assign roller button to left 1 button
+	    roller.move(roller_button ? 127 : 0);
 
-        // // because readings of the analog channel range from -127 to 127
-        // // scale the joystick values to be between -100 and 100
-        // // so, we will use a percentage from -100% to 100%
-        // analog_y *= 100 / 127;
-        // analog_x *= 100 / 127;
+	    std::tie(voltage_left, voltage_right) =
+		motor_voltage(drive_power, turn_power);
 
-        drive_power *= -0.6; // invert the x-axis
-        turn_power *= -1; // invert the x-axis
+	    // move the motor groups with the
+	    // calculated voltage
+	    left_motor_group.move(voltage_left);
+	    right_motor_group.move(voltage_right);
 
-        // // please refer to this, I don't know how to explain it
-        // // https://home.kendra.com/mauser/Joystick.html
-        // int vertical = (100 - abs(int(analog_x))) * (analog_y / 100) + analog_y;
-        // int horizontal = (100 - abs(int(analog_y))) * (analog_x / 100) + analog_x;
+	    // log
+	    pros::lcd::print(1, "analog_x: %d", drive_power);
+	    pros::lcd::print(2, "analog_y: %d", turn_power);
+	    pros::lcd::print(3, "voltage_left: %d", voltage_left);
+	    pros::lcd::print(4, "voltage_right: %d", voltage_right);
 
-        // int voltage_right = (((vertical - horizontal) / 2) / 100) * 127;
-        // int voltage_left = (((vertical + horizontal) / 2) / 100) * 127;
-
-        // // move the motor groups with the calculated voltage
-		left_front.move(drive_power + turn_power);
-		left_middle.move(drive_power + turn_power);
-		left_back.move(drive_power + turn_power);
-		right_front.move(drive_power - turn_power);
-		right_middle.move(drive_power - turn_power);
-		right_back.move(drive_power - turn_power);
-
-        // add a little bit of delay so it doesn't overheat or whatever
-        pros::delay(20);
-    }
+	    // add a little bit of delay so it
+	    // doesn't overheat or whatever
+	    pros::delay(20);
+	}
 }
