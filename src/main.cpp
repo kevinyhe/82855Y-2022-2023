@@ -19,9 +19,6 @@
 // SOFTWARE.
 
 #include "main.h"
-#include "pros/rtos.hpp"
-#include <cmath>
-#include <tuple>
 
 // initialize our motors and globals here
 pros::Motor left_front(4, true);
@@ -29,7 +26,7 @@ pros::Motor left_middle(5, true);
 pros::Motor left_back(6, true);
 pros::Motor right_front(10);
 pros::Motor
-    right_middle(2); // we don't know why this is reversed it's just like that
+    right_middle(2);
 pros::Motor right_back(3);
 pros::Motor roller(7);
 pros::Motor expansion(1); // temporary, depends on where we attach expansion
@@ -128,19 +125,8 @@ void opcontrol()
 	    expansion_button = master.get_digital(DIGITAL_L2);
 	    expansion_button_confirm = master.get_digital(DIGITAL_R2);
 
-	    // assign expansion button to left 2
-	    // button when endgame, expansion motor
-	    // will launch string
-	    if (expansion_button && expansion_button_confirm)
-		{
-		    expansion.move(-60);
-		}
-	    else
-		{
-		    expansion.move(0);
-		}
-
-	    // assign roller button to left 1 button
+	    roller.move((expansion_button && expansion_button_confirm) ? -60
+								       : 0);
 	    roller.move(roller_button ? 127 : 0);
 
 	    std::tie(voltage_left, voltage_right) =
