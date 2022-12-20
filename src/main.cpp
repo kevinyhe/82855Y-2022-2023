@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 #include "main.h"
+#include <vector>
 
 // initialize our motors and globals here
 pros::Motor left_front(4, true);
@@ -71,9 +72,13 @@ void autonomous()
     roller.move(0);
 }
 
-/**
-i: drive power
-j: turn power
+/** 
+ * Calculate the voltage for each drive train motor.
+ *
+ * This function takes the joystick values and calculates the voltage for each
+ *
+ * @param i The joystick value for the left joystick
+ * @param j The joystick value for the right joystick
 */
 std::tuple<int, int> motor_voltage(float i, float j)
 {
@@ -84,7 +89,7 @@ std::tuple<int, int> motor_voltage(float i, float j)
     // and multiply by 100 to get a percentage of full power
     float Y = (static_cast<float>(i) / 127.0) * 100;
     float X = (static_cast<float>(j) / 127.0) * 100;
-
+	
     // please refer to this, I don't know how to explain it
     // https://home.kendra.com/mauser/Joystick.html
     int V = (100 - abs(int(X))) * (Y / 100) + Y;
@@ -120,7 +125,7 @@ void opcontrol()
 	    // power as possible
 
 	    drive_power = master.get_analog(ANALOG_LEFT_Y);
-	    turn_power = master.get_analog(ANALOG_RIGHT_X);
+	    turn_power = master.get_analog(ANALOG_LEFT_X);
 	    roller_button = master.get_digital(DIGITAL_L1);
 	    expansion_button = master.get_digital(DIGITAL_L2);
 	    expansion_button_confirm = master.get_digital(DIGITAL_R2);
