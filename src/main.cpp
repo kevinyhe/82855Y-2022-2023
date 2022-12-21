@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 #include "main.h"
+#include "pros/motors.h"
 #include <vector>
 
 // initialize our motors and globals here
@@ -26,8 +27,7 @@ pros::Motor left_front(4, true);
 pros::Motor left_middle(5, true);
 pros::Motor left_back(6, true);
 pros::Motor right_front(10);
-pros::Motor
-    right_middle(2);
+pros::Motor right_middle(2);
 pros::Motor right_back(3);
 pros::Motor roller(7);
 pros::Motor expansion(1); // temporary, depends on where we attach expansion
@@ -49,8 +49,24 @@ void disabled() {}
 
 void competition_initialize() {}
 
-// autonomous code will be triggered
-// in the first 15s of the round
+/**
+ * Move the roller during the autonomous period
+ * This function will move the roller during the autonomous period
+ * @param type the side of the roller that you are facing, 0 is alliance colour
+ * forwardsm 1 is opposite alliance colour forward on the roller
+ */
+void move_roller_autonomous(int type = 0)
+{
+    left_motor_group.move(-127); // move backwards
+    right_motor_group.move(-127);
+    roller.move(-127); // start the roller
+
+    pros::delay(250);	      // delay for 250
+    left_motor_group.move(0); // stop the motors
+    right_motor_group.move(0);
+    roller.move(0);
+}
+
 void autonomous()
 {
     // as of 16/12/22, we have not yet added any functionality
@@ -61,25 +77,16 @@ void autonomous()
     // won't be using sensors and will continue to move_relative
     // and will be off by a few units and they start with a
     // severe disadvantage
-
-    left_motor_group.move(-127); // move backwards
-    right_motor_group.move(-127);
-    roller.move(-127);
-
-    pros::delay(250);
-    left_motor_group.move(0);
-    right_motor_group.move(0);
-    roller.move(0);
+    move_roller_autonomous(0);
+    left_motor_group.move_absolute(200, 100);
+    right_motor_group.move_absolute(100, 100);
 }
-
-/** 
+/**
  * Calculate the voltage for each drive train motor.
- *
- * This function takes the joystick values and calculates the voltage for each
- *
+ * This function takes the joystick values and calcul ates the voltage for each
  * @param i The joystick value for the left joystick
  * @param j The joystick value for the right joystick
-*/
+ */
 std::tuple<int, int> motor_voltage(float i, float j)
 {
     // because readings of the analog channel range from -127 to
@@ -89,14 +96,14 @@ std::tuple<int, int> motor_voltage(float i, float j)
     // and multiply by 100 to get a percentage of full power
     float Y = (static_cast<float>(i) / 127.0) * 100;
     float X = (static_cast<float>(j) / 127.0) * 100;
-	
+
     // please refer to this, I don't know how to explain it
     // https://home.kendra.com/mauser/Joystick.html
     int V = (100 - abs(int(X))) * (Y / 100) + Y;
     int W = (100 - abs(int(Y))) * (X / 100) + X;
 
     float R = static_cast<float>(((V - W) / 2.0)) / 100 * 127;
-    float L = static_cast<float>(((V - W) / 2.0)) / 100 * 127;
+    float L = static_cast<float>(((V + W) / 2.0)) / 100 * 127;
 
     // return a tuple of the left and right motor voltages
     // also cast the floats to int16 because it doesn't accept
@@ -125,17 +132,19 @@ void opcontrol()
 	    // power as possible
 
 	    drive_power = master.get_analog(ANALOG_LEFT_Y);
-	    turn_power = master.get_analog(ANALOG_LEFT_X);
+	    turn_power = master.get_analog(ANALOG_RIGHT_X);
 	    roller_button = master.get_digital(DIGITAL_L1);
 	    expansion_button = master.get_digital(DIGITAL_L2);
 	    expansion_button_confirm = master.get_digital(DIGITAL_R2);
 
 	    roller.move((expansion_button && expansion_button_confirm) ? -60
 								       : 0);
-	    roller.move(roller_button ? 127 : 0);
+	    roller.move(roller_button ? -127 : 0);
 
 	    std::tie(voltage_left, voltage_right) =
 		motor_voltage(drive_power, turn_power);
+
+	    turn_power *= -0.7;
 
 	    // move the motor groups with the
 	    // calculated voltage
