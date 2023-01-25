@@ -1,3 +1,6 @@
+#ifndef _CONFIG_H
+#define _CONFIG_H
+
 #include "main.h"
 
 extern pros::Controller master;
@@ -16,3 +19,5 @@ extern pros::Motor_Group right_motor_group;
 extern pros::Motor roller;
 
 extern pros::Motor flywheel;
+
+#endif /* _CONFIG_H */
