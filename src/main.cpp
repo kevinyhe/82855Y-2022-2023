@@ -1,4 +1,4 @@
-// Copyright (c) 2022 STL Robotics 82855Y
+// Copyright (c) 2023 STL Robotics 82855Y
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,12 +21,10 @@
 #include "main.h"
 #include "config.h"
 
-#include "func/auton/roller.h"
-#include "func/digital.h"
-#include "func/drive.h"
-
-
-void initialize() { pros::lcd::initialize(); }
+void initialize() {
+    pros::lcd::initialize();
+    pros::Task odometry(odom);
+}
 
 void disabled() {}
 
@@ -37,20 +35,25 @@ void competition_initialize() {}
  * Competition.
  * You must modify the code to add your own robot specific commands here.
  */
-void autonomous() { move_roller_autonomous(); }
+void autonomous() {
+    move_roller_autonomous();
+}
 
 /**
  * This task is used to control your robot during the user control
  * phase of a VEX Competition.
  * You must modify the code to add your own robot specific commands here.
  */
-void opcontrol()
-{
-    while (true)
-	{
-	    drive();
-	    digital();
-        
-	    pros::delay(20);
-	}
+
+void opcontrol() {
+    while (true) {
+        drive();
+        digital();
+
+        pros::lcd::print(0, "%f", left_encoder->get_distance());
+        pros::lcd::print(1, "%f", right_encoder->get_distance());
+        pros::lcd::print(2, "%f", back_encoder->get_distance());
+
+        pros::delay(20);
+    }
 }

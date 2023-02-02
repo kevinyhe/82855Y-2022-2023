@@ -1,18 +1,37 @@
-#include "func/drive.h"
+// Copyright (c) 2023 STL Robotics 82855Y
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #include "config.h"
+#include "func/opcontrol/drive.h"
 #include "main.h"
 
 float turn_power_multiplier = 0.5;
 
 /**
  * Calculate the voltage for each drive train motor.
- * This function takes the joystick values and calcul ates the voltage for
+ * This function takes the joystick values and calculates the voltage for
  * each
  * @param i The joystick value for the left joystick
  * @param j The joystick value for the right joystick
  */
-std::tuple<int, int> motor_voltage(float i, float j)
-{
+std::pair<int, int> motor_voltage(float i, float j) {
     // because readings of the analog channel range from -127 to
     // 127 scale the joystick values to be between -100 and 100
     // so, we will use a percentage from -100% to 100%
@@ -32,26 +51,26 @@ std::tuple<int, int> motor_voltage(float i, float j)
     // return a tuple of the left and right motor voltages
     // also cast the floats to int16 because it doesn't accept
     // floating point numbers
-    return std::make_tuple(static_cast<int>(L), static_cast<int>(R));
+    return std::pair(static_cast<int>(L), static_cast<int>(R));
 }
 
 /**
  * The drive function for the bot.
  */
-void drive()
-{
-    drive_power = master.get_analog(ANALOG_LEFT_Y);
-    turn_power = master.get_analog(ANALOG_RIGHT_X) * turn_power_multiplier;
+void drive() {
+    double drive_power = master.get_analog(ANALOG_LEFT_Y);
+    double turn_power = master.get_analog(ANALOG_RIGHT_X) * turn_power_multiplier;
     // `motor_voltage` returns a tuple with two values
-    // 0 is the left motor voltage and 1 is the right motor voltage
+    // 0 is the left motor voltage and 1 is the right motor voltage,
     // so we use `std::tie` to assign the values to the variables
-    std::tie(voltage_left, voltage_right) =
-	motor_voltage(drive_power, turn_power);
+    std::pair<double, double> voltage = motor_voltage(drive_power, turn_power);
+    double voltage_left = std::get<0>(voltage);
+    double voltage_right = std::get<1>(voltage);
 
     // move the motor groups
     left_motor_group.move(voltage_left);
     right_motor_group.move(voltage_right);
 
-    pros::lcd::print(1, "v_l: %d", voltage_left);
-    pros::lcd::print(2, "v_r: %d", voltage_right);
+    // pros::lcd::print(0, "VOLTAGE - left drivetrain: %d", voltage_left);
+    // pros::lcd::print(1, "VOLTAGE - right drivetrain: %d", voltage_right);
 }

@@ -1,8 +1,9 @@
 #ifndef _ROLLER_H
 #define _ROLLER_H
 
-#include "config.h"
 #include "main.h"
+
+#pragma once
 
 void move_roller_autonomous();
 
