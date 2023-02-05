@@ -14,7 +14,7 @@ namespace sensors {
 struct tracking_wheel {
     double diameter;
     tracking_wheel(double diameter) : diameter(diameter) {}
-    virtual units::distance get_distance() = 0;
+    virtual units::distance distance() = 0;
     virtual void reset() = 0;
 };
 
@@ -36,9 +36,10 @@ struct ADI_tracking_wheel : public tracking_wheel {
     /**
      * @brief get the distance travelled by the encoder (in inches)
      */
-    units::distance get_distance() {
-        return double(units::angle(units::degrees(encoder.get_value()))) *
-               double(diameter);
+    units::distance distance() {
+        return units::distance(
+            double(units::angle(units::degrees(encoder.get_value()))) *
+            double(diameter) / 2);
     }
 
     /**

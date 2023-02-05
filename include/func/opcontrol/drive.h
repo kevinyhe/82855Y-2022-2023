@@ -10,6 +10,6 @@ extern double voltage_left;
 extern double voltage_right;
 
 std::pair<int, int> motor_voltage(float i, float j);
-void drive();
+void drive_loop();
 
 #endif /* _DRIVE_H */

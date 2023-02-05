@@ -1,4 +1,5 @@
 #include "config.h"
+#include "func/auton/compute.h"
 #include "main.h"
 
 units::position location(units::coord(0, 0), units::angle());
@@ -21,9 +22,9 @@ pros::Motor roller(PORT_ROLLER);
 
 pros::Motor flywheel(PORT_FLYWHEEL);
 
-sensors::tracking_wheel* left_encoder =
-    new sensors::ADI_tracking_wheel(LEFT_TRACKING_PORT, false, WHEEL_DIAMETER);
-sensors::tracking_wheel* right_encoder =
-    new sensors::ADI_tracking_wheel(RIGHT_TRACKING_PORT, false, WHEEL_DIAMETER);
-sensors::tracking_wheel* back_encoder =
+sensors::ADI_tracking_wheel* left_encoder =
+    new sensors::ADI_tracking_wheel(LEFT_TRACKING_PORT, true, WHEEL_DIAMETER);
+sensors::ADI_tracking_wheel* right_encoder =
+    new sensors::ADI_tracking_wheel(RIGHT_TRACKING_PORT, true, WHEEL_DIAMETER);
+sensors::ADI_tracking_wheel* back_encoder =
     new sensors::ADI_tracking_wheel(BACK_TRACKING_PORT, false, WHEEL_DIAMETER);

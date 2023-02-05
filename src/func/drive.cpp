@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 #include "config.h"
-#include "func/opcontrol/drive.h"
 #include "main.h"
 
 float turn_power_multiplier = 0.5;
@@ -57,7 +56,7 @@ std::pair<int, int> motor_voltage(float i, float j) {
 /**
  * The drive function for the bot.
  */
-void drive() {
+void drive_loop() {
     double drive_power = master.get_analog(ANALOG_LEFT_Y);
     double turn_power = master.get_analog(ANALOG_RIGHT_X) * turn_power_multiplier;
     // `motor_voltage` returns a tuple with two values
@@ -70,7 +69,4 @@ void drive() {
     // move the motor groups
     left_motor_group.move(voltage_left);
     right_motor_group.move(voltage_right);
-
-    // pros::lcd::print(0, "VOLTAGE - left drivetrain: %d", voltage_left);
-    // pros::lcd::print(1, "VOLTAGE - right drivetrain: %d", voltage_right);
 }

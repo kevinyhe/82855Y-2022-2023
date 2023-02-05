@@ -21,6 +21,7 @@
 #include "compute.h"
 #include "config.h"
 #include "main.h"
+#include "pros/llemu.hpp"
 #include "pros/rtos.hpp"
 
 inline units::position target(units::coord(0, 0), units::angle(0));
@@ -34,12 +35,18 @@ void reset() {
 void odom() {
     reset();
 
+    struct odometry odometry(left_encoder, right_encoder, back_encoder);
+
     while (true) {
         position_control();
-        odometry odom(5.0, 5.0, 5.0);
 
-        pros::delay(5);
-        reset();
+        location = odometry.compute(location);
+
+        pros::lcd::print(5, "x_location: %d", location.x);
+        pros::lcd::print(6, "y_location: %d", location.y);
+        pros::lcd::print(7, "theta_location: %d", location._angle);
+
+        pros::delay(20);
     };
 };
 
