@@ -25,6 +25,8 @@
 #include "func/opcontrol/digital.h"
 #include "func/opcontrol/drive.h"
 #include "func/sensors/tracking.h"
+#include "func/units/angle/angle.h"
+#include "func/units/position/coord.h"
 #include "main.h"
 #include "pros/adi.hpp"
 
@@ -41,14 +43,14 @@
 #define RIGHT_ENCODER_DISTANCE 2
 #define BACK_ENCODER_DISTANCE 3
 
-#define PORT_LEFT_FRONT 1
-#define PORT_LEFT_MIDDLE 2
-#define PORT_LEFT_BACK 3
-#define PORT_RIGHT_FRONT 4
-#define PORT_RIGHT_MIDDLE 5
-#define PORT_RIGHT_BACK 6
-#define PORT_ROLLER 11
-#define PORT_FLYWHEEL 10
+#define PORT_LEFT_FRONT 15
+#define PORT_LEFT_MIDDLE 16
+#define PORT_LEFT_BACK 17
+#define PORT_RIGHT_FRONT 18 
+#define PORT_RIGHT_MIDDLE 14
+#define PORT_RIGHT_BACK 20
+#define PORT_ROLLER 2
+#define PORT_FLYWHEEL 4
 #define LEFT_TRACKING_PORT std::pair<int, int>(1, 2)
 #define RIGHT_TRACKING_PORT std::pair<int, int>(3, 4)
 #define BACK_TRACKING_PORT std::pair<int, int>(5, 6)
@@ -61,9 +63,23 @@
 #define TURN_PID_I 0.0
 #define TURN_PID_D 0.0
 
-#define PID_MAX 200 
+#define PID_MAX 200
 
-extern units::position location;
+#define INTAKE_BUTTON "L1"
+#define ROLLER_BUTTON "L2"
+#define FLYWHEEL_BUTTON "R1"
+#define EXPANSION_BUTTON "A"
+#define EXPANSION_CONFIRM_BUTTON "LEFT"
+#define INDEXER_BUTTON "R2"
+
+#define ADI_EXPANDER_PORT 11
+#define EXPANSION_ADI 'H'
+#define INDEXER_ADI 'A'
+
+extern std::map<std::string, pros::controller_digital_e_t> button_map;
+
+extern u::coord location;
+extern u::angle heading;
 
 extern pros::Controller master;
 
@@ -81,6 +97,9 @@ extern pros::Motor_Group right_motor_group;
 extern pros::Motor roller;
 
 extern pros::Motor flywheel;
+
+extern pros::ADIDigitalOut indexer;
+extern pros::ADIDigitalOut expansion;
 
 extern sensors::ADI_tracking_wheel* left_encoder;
 extern sensors::ADI_tracking_wheel* right_encoder;

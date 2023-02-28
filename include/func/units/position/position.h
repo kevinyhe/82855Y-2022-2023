@@ -6,7 +6,7 @@
 
 #pragma oncef
 
-namespace units {
+namespace u {
 struct position : public coord {
     angle _angle;
     position(coord vector, angle angle) : coord(vector), _angle(angle){};

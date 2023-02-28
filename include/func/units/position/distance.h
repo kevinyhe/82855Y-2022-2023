@@ -7,37 +7,37 @@
 
 #include "../unit.h"
 
-namespace units {
-struct distance : public unit {
-	// default units are `inches`
-	// returns 0 on default
-	distance() : unit(0){};
-	// constructor, intializes value of a member variable
-	// called unit
-	distance(double value) : unit(value){};
+namespace u {
+    struct distance : public unit {
+        // default units are `inches`
+        // returns 0 on default
+        distance() : unit(0){};
+        // constructor, intializes value of a member variable
+        // called unit
+        distance(double value) : unit(value){};
 
-	void operator+=(const distance &i) { value += (double)i; }
-	void operator-=(const distance &i) { value -= (double)i; }
-	void operator*=(const distance &i) { value *= (double)i; }
-	void operator/=(const distance &i) { value /= (double)i; }
+        void operator+=(const distance& i) { value += (double)i; }
+        void operator-=(const distance& i) { value -= (double)i; }
+        void operator*=(const distance& i) { value *= (double)i; }
+        void operator/=(const distance& i) { value /= (double)i; }
 
-	distance operator+(const distance &i) {
-		return distance(value + (double)i);
-	}
-	distance operator-(const distance &i) {
-		return distance(value - (double)i);
-	}
-	distance operator*(const distance &i) {
-		return distance(value * (double)i);
-	}
-	distance operator/(const distance &i) {
-		return distance(value / (double)i);
-	}
-};
+        distance operator+(const distance& i) {
+            return distance(value + (double)i);
+        }
+        distance operator-(const distance& i) {
+            return distance(value - (double)i);
+        }
+        distance operator*(const distance& i) {
+            return distance(value * (double)i);
+        }
+        distance operator/(const distance& i) {
+            return distance(value / (double)i);
+        }
+    };
 
-struct inches : public distance {
-	inches(double v) : distance(v){};
-};
-} // namespace units
+    struct inches : public distance {
+        inches(double v) : distance(v){};
+    };
+}  // u
 
-#endif	// _DATATYPE_DISTANCE_H
+#endif  // _DATATYPE_DISTANCE_H

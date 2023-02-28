@@ -20,6 +20,7 @@
 
 #include "main.h"
 #include "config.h"
+#include "pros/motors.h"
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -29,7 +30,7 @@
  */
 void initialize() {
     pros::lcd::initialize();
-    pros::Task odometry(odom);
+    // pros::Task odometry(odom);
 }
 
 /**
@@ -61,7 +62,9 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {}
+void autonomous() {
+    move_roller_autonomous();
+}
 
 /**
  * Runs the operator control code. This function will be started in its own task
@@ -77,14 +80,14 @@ void autonomous() {}
  * task, not resume it from where it left off.
  */
 void opcontrol() {
+    flywheel.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
+    left_motor_group.set_brake_modes(pros::E_MOTOR_BRAKE_BRAKE);
+    right_motor_group.set_brake_modes(pros::E_MOTOR_BRAKE_BRAKE);
+
     while (true) {
         drive_loop();
         digital();
 
-        pros::lcd::print(0, "l_encoder: %f", left_encoder->distance());
-        pros::lcd::print(1, "r_encoder: %f", right_encoder->distance());
-        pros::lcd::print(2, "b_encoder: %f", back_encoder->distance());
-
-        pros::delay(20);
+        pros::delay(10);
     }
 }

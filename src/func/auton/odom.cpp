@@ -24,7 +24,7 @@
 #include "pros/llemu.hpp"
 #include "pros/rtos.hpp"
 
-inline units::position target(units::coord(0, 0), units::angle(0));
+inline u::position target(u::coord(0, 0), u::angle(0));
 
 void reset() {
     left_encoder->reset();
@@ -33,35 +33,34 @@ void reset() {
 }
 
 void odom() {
-    reset();
 
-    struct odometry odometry(left_encoder, right_encoder, back_encoder);
+    // struct odometry odometry(left_encoder, right_encoder, back_encoder);
+    reset();
 
     while (true) {
         position_control();
 
-        location = odometry.compute(location);
+        // odometry.compute();
 
-        pros::lcd::print(5, "x_location: %d", location.x);
-        pros::lcd::print(6, "y_location: %d", location.y);
-        pros::lcd::print(7, "theta_location: %d", location._angle);
+        // pros::lcd::print(5, "x: %f", location.x);
+        // pros::lcd::print(6, "y: %f", location.y);
+        // pros::lcd::print(7, "t: %f", (double)heading * (180 / M_PI));
 
-        pros::delay(20);
+        pros::delay(5);
     };
 };
 
-void position_control() {
-    std::vector<PID::control*> drive_PID_elements{
-        new PID::proportional(DRIVE_PID_D, std::pair(PID_MAX, -PID_MAX)),
-        new PID::integral(DRIVE_PID_I, std::pair(PID_MAX, -PID_MAX)),
-        new PID::derivative(DRIVE_PID_P, std::pair(PID_MAX, -PID_MAX))};
-    PID::control_loop drive_PID_loop(drive_PID_elements, std::pair(0, 0));
+void create_loop(double kP, double kI, double kD, double max) {
+    std::vector<PID::control*> elements{
+        new PID::proportional(kP, std::pair(max, -max)),
+        new PID::integral(kI, std::pair(max, -max)),
+        new PID::derivative(kD, std::pair(         max, -max))};
+    PID::control_loop drive_PID_loop(elements, std::pair(0, 0));
+}
 
-    std::vector<PID::control*> turn_PID_elements{
-        new PID::proportional(DRIVE_PID_D, std::pair(PID_MAX, -PID_MAX)),
-        new PID::integral(DRIVE_PID_I, std::pair(PID_MAX, -PID_MAX)),
-        new PID::derivative(DRIVE_PID_P, std::pair(PID_MAX, -PID_MAX))};
-    PID::control_loop turn_PID_loop(turn_PID_elements, std::pair(0, 0));
+void position_control() {
+    create_loop(DRIVE_PID_P, DRIVE_PID_I, DRIVE_PID_D, PID_MAX);
+    create_loop(TURN_PID_P, TURN_PID_I, TURN_PID_D, PID_MAX);
 
     // TODO: use odometry to update location and do math and blah blah
 }

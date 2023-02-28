@@ -21,7 +21,7 @@
 #include "config.h"
 #include "main.h"
 
-float turn_power_multiplier = 0.5;
+float turn_power_multiplier = 0.75;
 
 /**
  * Calculate the voltage for each drive train motor.
@@ -69,4 +69,8 @@ void drive_loop() {
     // move the motor groups
     left_motor_group.move(voltage_left);
     right_motor_group.move(voltage_right);
+
+    // print the voltage to the screen
+    pros::lcd::print(0, "Left: %f", voltage_left);
+    pros::lcd::print(1, "Right: %f", voltage_right);
 }

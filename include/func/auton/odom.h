@@ -6,6 +6,7 @@
 
 #pragma once
 
+void create_loop();
 void reset();
 void odom();
 void position_control();

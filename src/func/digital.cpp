@@ -18,30 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "config.h"
 #include "func/opcontrol/digital.h"
+#include "config.h"
 #include "main.h"
-
-/**
- * This function maps the controller's digital buttons into strings
- * to make my life easier.
- */
-std::map<std::string, pros::controller_digital_e_t> _m = {
-    {"L1", DIGITAL_L1},	    {"L2", DIGITAL_L2},	      {"R1", DIGITAL_R1},
-    {"R2", DIGITAL_R2},	    {"UP", DIGITAL_UP},	      {"DOWN", DIGITAL_DOWN},
-    {"LEFT", DIGITAL_LEFT}, {"RIGHT", DIGITAL_RIGHT}, {"X", DIGITAL_X},
-    {"B", DIGITAL_B},	    {"Y", DIGITAL_Y},	      {"A", DIGITAL_A},
-};
+#include "pros/llemu.hpp"
 
 /**
  * Code for all the digital buttons i.e. rollers, flywheel, expansion
  */
 void digital() {
-	bool b_roller = master.get_digital(_m["L1"]);
-	bool b_flywheel = master.get_digital(_m["L2"]);
-	bool b_expansion = master.get_digital(_m["A"]);
-	bool b_expansion_c = master.get_digital(_m["LEFT"]);
+    bool button_roller = master.get_digital(button_map[ROLLER_BUTTON]);
+    bool button_intake = master.get_digital(button_map[INTAKE_BUTTON]);
+    bool button_flywheel = master.get_digital(button_map[FLYWHEEL_BUTTON]);
+    bool button_expansion = master.get_digital(button_map[EXPANSION_BUTTON]);
+    bool button_expansion_confirm =
+        master.get_digital(button_map[EXPANSION_CONFIRM_BUTTON]);
+    bool button_indexer = master.get_digital(button_map[INDEXER_BUTTON]);
 
-	roller.move(b_roller ? -127 : 0);
-	flywheel.move(b_flywheel ? -127 : 0);
+    bool activate_expansion = button_expansion && button_expansion_confirm;
+
+    roller.move(button_intake ? -127 : (button_roller ? 127 : 0));
+    flywheel.move(button_flywheel ? -127 : 0);
+
+    indexer.set_value(button_indexer);
+
+    // TODO: fix this later because our code is being bitchy
+    // if (!(button_expansion && button_expansion_confirm)) {
+    //     expansion.set_value(false);
+
+    // } else {
+    //     expansion.set_value(true);
+    // }
 };

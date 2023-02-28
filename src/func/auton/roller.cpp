@@ -32,7 +32,7 @@ void move_roller_autonomous()
     right_motor_group.move(127);
     roller.move(127); // start the roller
 
-    pros::delay(300);	      // delay for 250
+    pros::delay(200);	      // delay for 250
     left_motor_group.move(0); // stop the motors
     right_motor_group.move(0);
     roller.move(0);

@@ -30,7 +30,7 @@ struct control_loop {
      * @brief Construct a new control loop object
      * @param v the vector of `control` elements
      * @param m the minimum and maximum values that the output can be
-    */
+     */
     control_loop(std::vector<control*> v, std::pair<double, double> m)
         : control_set(v) {
         // initialize the vector and assign it to `control_set`

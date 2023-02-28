@@ -6,16 +6,19 @@
 #include "datatype.h"
 #include "func/sensors/tracking.h"
 #include "func/units/angle/angle.h"
+#include "func/units/position/coord.h"
 #include "func/units/position/distance.h"
 #include "main.h"
 #include "pros/llemu.hpp"
 
 #pragma once
 
+// nightmare nightmare nightmare
 struct odometry {
     /**
      * sL is the left-right distance from the tracking center to the left
-     * tracking wheel sR is the left-right distance from the tracking center to
+     * tracking wheel sR is the left-right distance from the tracking center
+     to
      * the right tracking wheel sS is the forward-backward distance from the
      * tracking center to the back tracking wheel
      * d0 is the previous global position vector
@@ -26,18 +29,18 @@ struct odometry {
     sensors::ADI_tracking_wheel* left_wheel;
     sensors::ADI_tracking_wheel* right_wheel;
     sensors::ADI_tracking_wheel* back_wheel;
-    units::distance sL = LEFT_ENCODER_DISTANCE;
-    units::distance sR = RIGHT_ENCODER_DISTANCE;
-    units::distance sS = BACK_ENCODER_DISTANCE;
+    u::distance sL = LEFT_ENCODER_DISTANCE;
+    u::distance sR = RIGHT_ENCODER_DISTANCE;
+    u::distance sS = BACK_ENCODER_DISTANCE;
 
-    units::distance d0 = 0;
-    units::angle theta1 = 0;
-    units::angle theta0 = 0;
-    units::angle thetaR = 0;
+    u::distance d0 = 0;
+    u::angle theta1 = 0;
+    u::angle theta0 = 0;
+    u::angle thetaR = 0;
 
-    units::distance lastL = 0;
-    units::distance lastR = 0;
-    units::distance lastS = 0;
+    u::distance lastL = 0;
+    u::distance lastR = 0;
+    u::distance lastS = 0;
 
     // make sure to initialize the tracking wheels with new so it allows for
     // polymorphism
@@ -51,7 +54,7 @@ struct odometry {
 
     // bitch ass position calculation
     // https://pos.tixo.ca !!! use this
-    units::position compute(units::position initial) {
+    void compute() {
         // position tracking works by modelling the motion of the
         // tracking center as an arc over an infinitely short time interval.
         // the arc angle is the same as the change of orientation in the robot.
@@ -60,72 +63,77 @@ struct odometry {
         // left and right encoders. use the standard arc length formula, then
         // combine to eliminate the radius of the "circle" (motion of tracking
         // center)
-        units::distance dL = left_wheel->distance() - lastL;
-        units::distance dR = right_wheel->distance() - lastR;
-        units::distance dS = back_wheel->distance() - lastS;
+        u::distance dL_r = left_wheel->distance();
+        u::distance dR_r = right_wheel->distance();
+        u::distance dS_r = back_wheel->distance();
 
-        lastL = dL;
-        lastR = dR;
-        lastS = dS;
+        u::distance dL = dL_r - lastL;
+        u::distance dR = dR_r - lastR;
+        u::distance dS = dS_r - lastS;
 
-        theta0 = initial._angle;
+        // update the last position values
+        lastL = dL_r;
+        lastR = dR_r;
+        lastS = dS_r;
+        
+        // we can represent the robot's motion as a triangle with the two legs
+        // being the left and right wheel displacements and the hypotenuse being
+        // the total displacement of the robot. we can use the law of sines to
+        // find the hypotenuse. the angle of the hypotenuse is the change in
+        // orientation of the robot. we can use the law of cosines to find the
+        // angle of the hypotenuse. we can then use the angle of the hypotenuse
+        // to find the x and y components of the displacement of the robot.
+        // we can then add the x and y components to the current position to
+        // find the new position.
 
-        // this will give a value in radians
-        // our orientation can be calculated as an absolute quantity
-        // rtather than a relative change bceause it applies regardless
-        // of where the robot is on the field
-        units::angle theta1 =
-            thetaR + units::angle(double(dL - dR) / double(sL + sR));
-        units::angle dT = theta1 - theta0;
+        // also note that the triangle formed by the arc is isosceles
 
-        units::coord local_offset;
+        u::distance h; // hypotenuse that gives total displacement of robot
+        u::distance h2; 
+        u::angle theta = double(dL - dR) / (sL + sR);
+        u::angle i; // half of a, the increase in current heading
 
-        if (double(dT) == 0) {
-            // this means the robot has not turned, so `dL` = `dR`
-            // calculate local offset
-            local_offset = units::coord(dS, dR);
-        } else {
-            // 
-            units::distance local_offset_x =
-                double(2 * sin(double(dT) / 2) * ((dS / dT) + sS));
-            units::distance local_offset_y =
-                double(2 * sin(double(dT) / 2) * ((dR / dT) + sR));
-            local_offset = units::coord(local_offset_x, local_offset_y);
+        // change in bearing
+        if (theta) {
+            // radius of the circle that the robot travels with its right wheel
+            u::distance radius = (double)dR / theta;
+            i = (double)theta / 2.0;
+            h = 2.0 * (double(radius + sR) * sin(i));
+
+            u::distance radiusB =
+                (double)dS / theta;  // radius of the circle that the robot
+                                     // travels with its back wheel.
+            h2 = 2.0 * (double(radiusB + sS) * sin(i));
+        } else { // no change in bearing
+            h = dR;
+            i = 0;
+            h2 = dS;
         }
 
-        // calculate average orientation
-        units::angle thetaM = theta0 + units::angle(double(dT) / 2);
+        // angle of movement but not the final angle position
+        u::angle ma = i + heading; 
 
-        // calculate global offset
-        std::pair<double, units::angle> polar_global_offset =
-            to_polar(local_offset);
-        units::angle polar_global_orientation =
-            polar_global_offset.second + thetaM;
-        units::coord global_offset =
-            to_cartesian(polar_global_offset.first, polar_global_orientation);
-        initial += global_offset;
-        initial._angle += dT;
-        thetaR = initial._angle;
-        return initial;
-    };
+        // updates the global position
+        location.y += double(h) * cos(ma);
+        location.x += double(h) * sin(ma);
 
-    // polar coordinates are determined by a distance from a reference
-    // point and an angle from a reference direction. in our case, polar
-    // coordinates can be used to express a vector of the bot's translation
-    // with a magnitude and direction. this is useful for calculating the
-    // bot's position in the field.
-    std::pair<double, units::angle> to_polar(units::coord c) {
-        double rho = sqrt(pow(c.x, 2) + pow(c.y, 2));
-        units::angle theta = units::angle(atan2(c.y, c.x));
-        return std::pair<double, units::angle>(rho, theta);
+        // drift correction to the global position
+        location.y += (double)h2 * -sin(ma);
+        location.x += (double)h2 * cos(ma);
+
+        heading += theta;  // updates the current global angle
+
+        // constrain the angle
+        heading = wrap(heading);
     }
 
-    // convert polar coordinates back to cartesian coordinates
-    units::coord to_cartesian(double rho, units::angle theta) {
-        units::coord c;
-        c.x = rho * cos(theta);
-        c.y = rho * sin(theta);
-        return c;
+    // wrap angles between 0 and 2PI degrees
+    u::angle wrap(u::angle v) {
+        // division by zero is undefined, so we need to check for it
+        if (isnanf(v) || isinff(v))
+            v = 0;
+        // conform to normal modulus rules so that negative numbers
+        return fmod(fmod(v, 2 * M_PI) + 2 * M_PI, 2 * M_PI);
     }
 };
 
